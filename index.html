@@ -24,7 +24,6 @@
 
         .auth-box { max-width: 400px; margin: auto; width: 100%; }
         .input-line { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid #1a1a1a; padding-bottom: 5px; }
-        .input-line span { color: #666; font-size: 10px; width: 70px; }
         input { background: transparent; border: none; color: #fff; font-family: 'Fira Code'; outline: none; width: 100%; font-size: 14px; }
         
         .term-btn { flex: 1; background: transparent; border: 1px solid #00ff41; color: #00ff41; padding: 10px; cursor: pointer; font-family: 'Fira Code'; font-size: 11px; border-radius: 4px; transition: 0.2s; }
@@ -33,7 +32,7 @@
         .sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
         .sidebar-box { flex: 1; min-height: 180px; }
         #chat-box, #leaderboard-box { font-size: 11px; line-height: 1.6; }
-        .chat-in { padding: 12px; background: #080808; border-top: 1px solid #1a1a1a; font-size: 12px; border-radius: 0; color: #fff; outline: none; border: none; width: 100%; }
+        .chat-in { padding: 12px; background: #080808; border-top: 1px solid #1a1a1a; font-size: 12px; color: #fff; outline: none; border: none; width: 100%; }
 
         .highlight { color: #fff; text-shadow: 0 0 5px #00ff41; }
         .command-line { display: flex; align-items: center; padding-top: 10px; }
@@ -120,32 +119,43 @@
 
         const formatN = (num) => Number(num).toLocaleString('id-ID');
         const playSound = (id) => document.getElementById(id).play().catch(()=>{});
-        
-        const scrollBottom = () => { 
-            const area = document.getElementById('term-scroll');
-            setTimeout(() => { area.scrollTop = area.scrollHeight; }, 50);
-        };
+        const scrollBottom = () => { const area = document.getElementById('term-scroll'); setTimeout(() => { area.scrollTop = area.scrollHeight; }, 50); };
 
         const showLoading = (hist, text = "SYNCING") => {
             return new Promise((resolve) => {
                 let pct = 0; const line = document.createElement('div'); hist.appendChild(line);
                 const inv = setInterval(() => {
                     pct += 10; line.innerHTML = `<span style="color:#ffbd2e">${text}: [${'#'.repeat(pct/10)}${'.'.repeat(10-pct/10)}] ${pct}%</span>`;
-                    scrollBottom(); 
-                    if (pct >= 100) { clearInterval(inv); line.innerHTML = `<span style="color:#00ff41">OPERATION SUCCESS.</span>`; scrollBottom(); resolve(); }
+                    scrollBottom(); if (pct >= 100) { clearInterval(inv); line.innerHTML = `<span style="color:#00ff41">OPERATION SUCCESS.</span>`; scrollBottom(); resolve(); }
                 }, 100);
             });
         };
 
-        const printLogo = () => {
+        // --- UPDATED PRINT WELCOME DENGAN PESAN MASTER ---
+        const printWelcome = () => {
+            const hist = document.getElementById('history');
             const logo = `
 ██╗   ██╗ █████╗ ██╗   ██╗██╗     ████████╗
 ██║   ██║██╔══██╗██║   ██║██║     ╚══██╔══╝
 ██║   ██║███████║██║   ██║██║        ██║   
 ╚██╗ ██╔╝██╔══██║██║   ██║██║        ██║   
  ╚████╔╝ ██║  ██║╚██████╔╝███████╗   ██║   `;
-            document.getElementById('history').innerHTML += `<pre>${logo}</pre>
-            <p style="color:#ffbd2e">SYSTEM LOADED. USER: ${user.name} [ID: ${user.id}]</p><hr style="border-top:1px dashed #222">`;
+            hist.innerHTML += `<pre>${logo}</pre>
+            <p style="color:#ffbd2e">SYSTEM LOADED. USER: ${user.name} [ID: ${user.id}]</p>
+            <div style="background:#0a0a0a; padding:12px; border-left:3px solid #00ff41; margin:10px 0; font-size:12px; color:#fff;">
+                <p style="color:#00ff41; margin-bottom:8px;"><b>[BROADCAST DARI MASTER]</b></p>
+                <p>"Selamat datang di VAULT-05. Ketik <b>help</b> di terminal untuk melihat daftar perintah. 
+                Ingat, sistem ini bersifat satu perangkat satu akun. Semua uang digital bersumber dari saya, 
+                dan kamu bisa bebas transfer ke sesama user pakai ID masing-masing. 
+                Hati-hati, saya memantau semua trafik dari sini!"</p>
+            </div>
+            <div style="background:#111; padding:10px; border:1px solid #222; margin:10px 0; font-size:11px;">
+                <p style="color:#ffbd2e; margin:0 0 5px 0;">-- MANUAL SINGKAT --</p>
+                <p>• <b style="color:#fff">balance</b> : Cek saldo.</p>
+                <p>• <b style="color:#fff">transfer [ID] [JUMLAH]</b> : Kirim uang.</p>
+                <p>• <b style="color:#fff">history</b> : Riwayat transaksi.</p>
+                <p>• <b style="color:#fff">clear</b> : Bersihkan terminal.</p>
+            </div><hr style="border-top:1px dashed #222">`;
             scrollBottom();
         };
 
@@ -177,7 +187,7 @@
 
         function initSystem() {
             document.getElementById('display-id').innerText = user.id;
-            printLogo();
+            printWelcome();
             const ctx = document.getElementById('txChart').getContext('2d');
             txChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: '#00ff41', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(0, 255, 65, 0.1)', tension: 0.4 }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{beginAtZero:true, ticks:{color:'#333', font:{size:8}}}} } });
             
@@ -264,33 +274,24 @@
                     if(toU && msg) push(ref(db, 'messages'), { user: user.name, text: msg, to: toU, type: 'private' });
                 }
                 else if(cmd === 'balance') hist.innerHTML += `<p>WALLET: <span class="highlight">${formatN(user.balance)}</span></p>`;
-                else if(cmd === 'clear') { hist.innerHTML = ""; printLogo(); }
+                else if(cmd === 'clear') { hist.innerHTML = ""; printWelcome(); }
                 else if(cmd === 'logout_force') { await showLoading(hist); update(ref(db, `users/${user.name}`), { online: false }); localStorage.removeItem('vault_user_lock'); location.reload(); }
-                
-                // --- FIX: FITUR TRANSFER UNTUK SEMUA ---
                 else if (cmd === 'transfer') {
                     if(user.is_frozen) { hist.innerHTML += `<p style="color:red">ERR: ACCOUNT FROZEN.</p>`; scrollBottom(); return; }
                     const idT = pts[1]?.toUpperCase(); const amt = parseFloat(pts[2]);
                     const snap = await get(ref(db, 'users'));
-                    const allUsers = snap.val();
-                    const targetEntry = Object.entries(allUsers).find(([n, d]) => d.id === idT);
-                    
+                    const targetEntry = Object.entries(snap.val()).find(([n, d]) => d.id === idT);
                     if(targetEntry && amt > 0 && amt <= user.balance) {
                         const targetName = targetEntry[0];
-                        const targetData = targetEntry[1];
                         const now = new Date().toLocaleTimeString();
                         await showLoading(hist, "VERIFYING TRANSACTION");
                         await update(ref(db, `users/${user.name}`), { balance: user.balance - amt });
-                        await update(ref(db, `users/${targetName}`), { balance: targetData.balance + amt });
+                        await update(ref(db, `users/${targetName}`), { balance: targetEntry[1].balance + amt });
                         push(ref(db, 'blockchain'), { amt, time: now });
                         push(ref(db, 'history'), { from: user.name, to: targetName, amt: amt, time: now });
                         playSound('sound-success');
-                    } else { 
-                        hist.innerHTML += `<p style="color:red">ERR: INVALID ID OR INSUFFICIENT BALANCE.</p>`; 
-                    }
+                    } else { hist.innerHTML += `<p style="color:red">ERR: INVALID ID OR INSUFFICIENT BALANCE.</p>`; }
                 }
-                
-                // --- KONTROL ADMIN MASTER ---
                 else if(user.name === "MasterHafiz") {
                     const targetU = pts[1];
                     if(cmd === 'sudo_clear_chat') {
