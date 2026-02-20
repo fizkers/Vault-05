@@ -60,9 +60,9 @@
     <div id="login-screen" class="terminal-container auth-box">
         <div class="terminal-header"><div class="buttons"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="title">VAULT SECURE ACCESS</div></div>
         <div class="terminal-body">
-            <div class="input-line"><span>USER-ID</span><input type="text" id="login-user" autocomplete="off"></div>
-            <div class="input-line"><span>PASSWORD</span><input type="password" id="login-pass"></div>
-            <div id="reg-fields" style="display:none;"><div class="input-line"><span>RE-PASSWORD</span><input type="password" id="reg-pass-confirm"></div></div>
+            <div class="input-line"><span>USER</span><input type="text" id="login-user" autocomplete="off"></div>
+            <div class="input-line"><span>PASS</span><input type="password" id="login-pass"></div>
+            <div id="reg-fields" style="display:none;"><div class="input-line"><span>RE-PASS</span><input type="password" id="reg-pass-confirm"></div></div>
             <div style="display:flex; gap:10px; margin-top:15px;">
                 <button id="btn-login" class="term-btn">LOGIN</button>
                 <button id="btn-reg-toggle" class="term-btn">SIGN UP</button>
@@ -100,7 +100,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, get, onValue, push, update, limitToLast, query, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, get, onValue, push, update, limitToLast, query, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDZe0QP2l2nAjw6qeYUE9wkryMTAnC6N_0",
@@ -121,19 +121,18 @@
         const formatN = (num) => Number(num).toLocaleString('id-ID');
         const playSound = (id) => document.getElementById(id).play().catch(()=>{});
         
-        // --- FIXED SCROLL LOGIC ---
         const scrollBottom = () => { 
             const area = document.getElementById('term-scroll');
             setTimeout(() => { area.scrollTop = area.scrollHeight; }, 50);
         };
 
-        const showLoading = (hist) => {
+        const showLoading = (hist, text = "SYNCING") => {
             return new Promise((resolve) => {
                 let pct = 0; const line = document.createElement('div'); hist.appendChild(line);
                 const inv = setInterval(() => {
-                    pct += 10; line.innerHTML = `<span style="color:#ffbd2e">SYNCING: [${'#'.repeat(pct/10)}${'.'.repeat(10-pct/10)}] ${pct}%</span>`;
+                    pct += 10; line.innerHTML = `<span style="color:#ffbd2e">${text}: [${'#'.repeat(pct/10)}${'.'.repeat(10-pct/10)}] ${pct}%</span>`;
                     scrollBottom(); 
-                    if (pct >= 100) { clearInterval(inv); line.innerHTML = `<span style="color:#00ff41">BROADCAST SUCCESS.</span>`; scrollBottom(); resolve(); }
+                    if (pct >= 100) { clearInterval(inv); line.innerHTML = `<span style="color:#00ff41">OPERATION SUCCESS.</span>`; scrollBottom(); resolve(); }
                 }, 100);
             });
         };
@@ -199,7 +198,6 @@
                 txChart.data.labels = txs.map(t => t.time); txChart.data.datasets[0].data = txs.map(t => t.amt); txChart.update();
             });
 
-            // LIVE HISTORY MONITORING
             const histRef = query(ref(db, 'history'), limitToLast(5));
             onValue(histRef, (snap) => {
                 const data = snap.val(); if(!data) return;
@@ -210,15 +208,10 @@
                         const sign = isOut ? "-" : "+";
                         const peerLabel = isOut ? `TO: ${tx.to}` : `FROM: ${tx.from}`;
                         const logID = `log-${tx.time}-${tx.amt}`.replace(/:/g,'-');
-                        
                         if(!document.getElementById(logID)) {
-                            const entry = document.createElement('div');
-                            entry.id = logID;
-                            entry.className = "tx-log";
-                            entry.style.color = color;
+                            const entry = document.createElement('div'); entry.id = logID; entry.className = "tx-log"; entry.style.color = color;
                             entry.innerHTML = `[${tx.time}] ${sign}${formatN(tx.amt)} | ${peerLabel}`;
-                            document.getElementById('history').appendChild(entry);
-                            scrollBottom();
+                            document.getElementById('history').appendChild(entry); scrollBottom();
                         }
                     }
                 });
@@ -226,7 +219,8 @@
 
             onValue(ref(db, 'messages'), (snap) => {
                 const cb = document.getElementById('chat-box');
-                const data = snap.val(); if(!data) return;
+                const data = snap.val(); 
+                if(!data) { cb.innerHTML = `<div style="color:#444;text-align:center">-- NO MESSAGES --</div>`; return; }
                 cb.innerHTML = Object.values(data).map(x => {
                     if (!x.type) return `<div><span style="color:#ffbd2e">${x.user}</span>: ${x.text}</div>`;
                     if (x.type === 'private' && (x.to === user.name || x.user === user.name)) {
@@ -249,7 +243,7 @@
                 if (cmd === 'help') {
                     hist.innerHTML += `<div style="color:#00ff41; font-size:11px; margin:5px 0; border:1px solid #222; padding:5px;">
                         <p>> balance | clear | history | transfer [ID] [AMT] | /pm [USER] [MSG]</p>
-                        ${user.name === "MasterHafiz" ? `<p style="color:#ff5f56">> mine start/stop | deposit [AMT] | /freeze [user] | /unfreeze [user] | sudo_reset_user [user] | logout_force</p>` : ""}
+                        ${user.name === "MasterHafiz" ? `<p style="color:#ff5f56">> mine start/stop | deposit [AMT] | /freeze [user] | sudo_clear_chat | logout_force</p>` : ""}
                     </div>`;
                 }
                 else if (cmd === 'history') {
@@ -272,27 +266,42 @@
                 else if(cmd === 'balance') hist.innerHTML += `<p>WALLET: <span class="highlight">${formatN(user.balance)}</span></p>`;
                 else if(cmd === 'clear') { hist.innerHTML = ""; printLogo(); }
                 else if(cmd === 'logout_force') { await showLoading(hist); update(ref(db, `users/${user.name}`), { online: false }); localStorage.removeItem('vault_user_lock'); location.reload(); }
-                else if(cmd === 'transfer') {
-                    if(user.is_frozen) { hist.innerHTML += `<p style="color:red">ERR: FROZEN.</p>`; scrollBottom(); return; }
-                    const idT = pts[1]; const amt = parseFloat(pts[2]);
+                
+                // --- FIX: FITUR TRANSFER UNTUK SEMUA ---
+                else if (cmd === 'transfer') {
+                    if(user.is_frozen) { hist.innerHTML += `<p style="color:red">ERR: ACCOUNT FROZEN.</p>`; scrollBottom(); return; }
+                    const idT = pts[1]?.toUpperCase(); const amt = parseFloat(pts[2]);
                     const snap = await get(ref(db, 'users'));
-                    const target = Object.entries(snap.val()).find(([n, d]) => d.id === idT);
-                    if(target && amt > 0 && amt <= user.balance) {
+                    const allUsers = snap.val();
+                    const targetEntry = Object.entries(allUsers).find(([n, d]) => d.id === idT);
+                    
+                    if(targetEntry && amt > 0 && amt <= user.balance) {
+                        const targetName = targetEntry[0];
+                        const targetData = targetEntry[1];
                         const now = new Date().toLocaleTimeString();
-                        await showLoading(hist);
+                        await showLoading(hist, "VERIFYING TRANSACTION");
                         await update(ref(db, `users/${user.name}`), { balance: user.balance - amt });
-                        await update(ref(db, `users/${target[0]}`), { balance: target[1].balance + amt });
+                        await update(ref(db, `users/${targetName}`), { balance: targetData.balance + amt });
                         push(ref(db, 'blockchain'), { amt, time: now });
-                        push(ref(db, 'history'), { from: user.name, to: target[0], amt: amt, time: now });
+                        push(ref(db, 'history'), { from: user.name, to: targetName, amt: amt, time: now });
                         playSound('sound-success');
-                    } else { hist.innerHTML += `<p style="color:red">ERR: DATA INVALID.</p>`; }
+                    } else { 
+                        hist.innerHTML += `<p style="color:red">ERR: INVALID ID OR INSUFFICIENT BALANCE.</p>`; 
+                    }
                 }
+                
+                // --- KONTROL ADMIN MASTER ---
                 else if(user.name === "MasterHafiz") {
                     const targetU = pts[1];
-                    if(cmd === 'mine') {
+                    if(cmd === 'sudo_clear_chat') {
+                        await showLoading(hist, "PURGING CHAT LOGS");
+                        await remove(ref(db, 'messages'));
+                        hist.innerHTML += `<p style="color:cyan">DATABASE: Chat History Erased.</p>`;
+                    }
+                    else if(cmd === 'mine') {
                         if(pts[1] === 'start') {
                             if(!miningInterval) miningInterval = setInterval(() => update(ref(db, `users/${user.name}`), { balance: user.balance + 0.1 }), 5000);
-                            hist.innerHTML += `<p style="color:cyan">MINING: ACTIVE (SILENT)</p>`;
+                            hist.innerHTML += `<p style="color:cyan">MINING: ACTIVE</p>`;
                         } else { clearInterval(miningInterval); miningInterval = null; hist.innerHTML += `<p style="color:red">MINING: STOPPED</p>`; }
                     }
                     else if(cmd === 'deposit') { 
@@ -303,7 +312,6 @@
                     }
                     else if(cmd === '/freeze') { update(ref(db, `users/${targetU}`), { is_frozen: true }); hist.innerHTML += `<p style="color:red">LOCKED: ${targetU}</p>`; }
                     else if(cmd === '/unfreeze') { update(ref(db, `users/${targetU}`), { is_frozen: false }); hist.innerHTML += `<p style="color:#00ff41">ACTIVE: ${targetU}</p>`; }
-                    else if(cmd === 'sudo_reset_user') { update(ref(db, `users/${targetU}`), { device_locked: false }); hist.innerHTML += `<p style="color:orange">RESET: ${targetU}</p>`; }
                 }
                 scrollBottom();
             }
