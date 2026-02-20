@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VAULT-OS | MASTER SYSTEM</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            background: #050505; 
+            color: #00ff41; 
+            font-family: 'Fira Code', monospace; 
+            margin: 0; 
+            padding: 10px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+        }
+
+        /* Layout Utama */
+        .main-layout { 
+            display: grid; 
+            grid-template-columns: 2.5fr 1fr; 
+            gap: 15px; 
+            width: 100%; 
+            max-width: 1200px; 
+            height: 90vh; 
+        }
+
+        .terminal-container { 
+            background: #0d0d0d; 
+            border: 1px solid #1a1a1a; 
+            border-radius: 12px; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            overflow: hidden;
+        }
+
+        .terminal-header { 
+            background: #1a1a1a; 
+            padding: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+            flex-shrink: 0; 
+        }
+
+        .buttons { display: flex; gap: 6px; position: absolute; left: 15px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .red { background: #ff5f56; } 
+        .yellow { background: #ffbd2e; } 
+        .green { background: #27c93f; }
+        .title { color: #666; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+        .terminal-body { 
+            padding: 15px; 
+            overflow-y: auto; 
+            font-size: 13px; 
+            flex-grow: 1; 
+            scrollbar-width: none; 
+        }
+        .terminal-body::-webkit-scrollbar { display: none; }
+
+        /* Auth Screen */
+        .auth-box { max-width: 400px; margin: auto; }
+        .input-line { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid #1a1a1a; padding-bottom: 5px; }
+        .input-line span { color: #666; font-size: 11px; width: 80px; }
+        input, select { background: transparent; border: none; color: #fff; font-family: 'Fira Code'; outline: none; width: 100%; font-size: 14px; }
+        select { background: #1a1a1a; cursor: pointer; }
+
+        .term-btn { 
+            flex: 1; 
+            background: transparent; 
+            border: 1px solid #00ff41; 
+            color: #00ff41; 
+            padding: 10px; 
+            cursor: pointer; 
+            font-family: 'Fira Code'; 
+            font-size: 11px; 
+            border-radius: 4px; 
+            transition: 0.3s;
+        }
+        .term-btn:hover { background: #00ff41; color: #000; }
+
+        /* Sidebar & Sidebar Boxes */
+        .sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
+        .sidebar-box { flex: 1; min-height: 180px; }
+        #chat-box, #leaderboard-box { font-size: 11px; line-height: 1.6; }
+        .chat-in { padding: 12px; background: #080808; border-top: 1px solid #1a1a1a; font-size: 12px; }
+
+        /* Blockchain Visuals */
+        .highlight { color: #fff; text-shadow: 0 0 5px #00ff41; }
+        .command-line { display: flex; align-items: center; padding-top: 10px; }
+        .prompt { color: #00ff41; margin-right: 10px; font-weight: bold; }
+
+        #broadcast-layer { 
+            display: none; position: fixed; top: 0; left: 0; right: 0; 
+            background: #ff5f56; color: #fff; text-align: center; 
+            padding: 8px; z-index: 9999; font-size: 12px; 
+        }
+
+        /* Responsive HP */
+        @media (max-width: 900px) { 
+            .main-layout { grid-template-columns: 1fr; height: auto; display: block; } 
+            .terminal-container { margin-bottom: 15px; height: 500px; }
+            .sidebar-box { height: 250px; }
+            body { overflow-y: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="sound-success" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" preload="auto"></audio>
+    <audio id="sound-money" src="https://assets.mixkit.co/active_storage/sfx/1614/1614-preview.mp3" preload="auto"></audio>
+
+    <div id="broadcast-layer"> [SYSTEM BROADCAST]: <span id="broadcast-msg"></span> </div>
+
+    <div id="login-screen" class="terminal-container auth-box">
+        <div class="terminal-header">
+            <div class="buttons"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+            <div class="title">SECURE ACCESS GATEWAY</div>
+        </div>
+        <div class="terminal-body">
+            <div class="input-line"><span>USERNAME</span><input type="text" id="login-user" autocomplete="off"></div>
+            <div class="input-line"><span>PASSWORD</span><input type="password" id="login-pass"></div>
+            
+            <div id="reg-fields" style="display:none; margin-top:10px;">
+                <div class="input-line"><span>CONFIRM</span><input type="password" id="reg-pass-confirm"></div>
+                <div class="input-line"><span>COUNTRY</span><input type="text" id="reg-country" placeholder="Indonesia"></div>
+                <div class="input-line">
+                    <span>LANGUAGE</span>
+                    <select id="reg-lang">
+                        <option value="id">Indonesia</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button id="btn-login" class="term-btn">LOGIN</button>
+                <button id="btn-reg-toggle" class="term-btn">SIGN UP</button>
+                <button id="btn-reg-final" class="term-btn" style="display:none;">CONFIRM REGISTER</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app" style="display:none; width: 100%; max-width: 1200px;">
+        <div class="main-layout">
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <div class="buttons"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <div class="title">TERMINAL@VAULT — <span id="display-id" style="color:#ffbd2e"></span></div>
+                </div>
+                <div class="terminal-body" id="term-scroll">
+                    <div id="history"></div>
+                    <div class="command-line">
+                        <span class="prompt">$</span>
+                        <input type="text" id="user-input" autofocus autocomplete="off" spellcheck="false">
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="terminal-container sidebar-box">
+                    <div class="terminal-header"><div class="title">NETWORK TRAFFIC</div></div>
+                    <div class="terminal-body"><canvas id="txChart"></canvas></div>
+                </div>
+                <div class="terminal-container sidebar-box">
+                    <div class="terminal-header"><div class="title">ENCRYPTED CHAT</div></div>
+                    <div class="terminal-body" id="chat-box"></div>
+                    <input type="text" id="chat-input" placeholder="Kirim pesan ke semua..." class="chat-in">
+                </div>
+                <div class="terminal-container sidebar-box">
+                    <div class="terminal-header"><div class="title">RANKING</div></div>
+                    <div class="terminal-body" id="leaderboard-box"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZe0QP2l2nAjw6qeYUE9wkryMTAnC6N_0",
+            authDomain: "vault-blockchain.firebaseapp.com",
+            databaseURL: "https://vault-blockchain-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "vault-blockchain",
+            storageBucket: "vault-blockchain.firebasestorage.app",
+            messagingSenderId: "297566281394",
+            appId: "1:297566281394:web:b7b7257551dfe5f69bb3ab"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        let user = { name: "", id: "", balance: 0, is_frozen: false };
+        let txChart;
+        let miningInterval = null;
+
+        const formatN = (num) => Number(num).toLocaleString('id-ID');
+        const playSound = (id) => document.getElementById(id).play().catch(()=>{});
+
+        // --- UI UTILITY ---
+        const scrollBottom = () => {
+            const area = document.getElementById('term-scroll');
+            area.scrollTop = area.scrollHeight;
+        };
+
+        const showLoading = (hist) => {
+            return new Promise((resolve) => {
+                let pct = 0;
+                const line = document.createElement('div');
+                hist.appendChild(line);
+                const inv = setInterval(() => {
+                    pct += 10;
+                    line.innerHTML = `<span style="color:#ffbd2e">SYNCING: [${'#'.repeat(pct/10)}${'.'.repeat(10-pct/10)}] ${pct}%</span>`;
+                    scrollBottom();
+                    if (pct >= 100) {
+                        clearInterval(inv);
+                        line.innerHTML = `<span style="color:#00ff41">SUCCESS: DATA BROADCASTED TO NODES.</span>`;
+                        resolve();
+                    }
+                }, 100);
+            });
+        };
+
+        // --- AUTH LOGIC ---
+        document.getElementById('btn-reg-toggle').onclick = () => {
+            document.getElementById('reg-fields').style.display = 'block';
+            document.getElementById('btn-login').style.display = 'none';
+            document.getElementById('btn-reg-toggle').style.display = 'none';
+            document.getElementById('btn-reg-final').style.display = 'block';
+        };
+
+        document.getElementById('btn-reg-final').onclick = async () => {
+            const lock = localStorage.getItem('vault_user_lock');
+            if(lock) return alert("Device ini sudah terikat akun: " + lock);
+            
+            const u = document.getElementById('login-user').value.trim();
+            const p = document.getElementById('login-pass').value;
+            const cp = document.getElementById('reg-pass-confirm').value;
+            if(!u || p !== cp) return alert("Input tidak valid!");
+
+            const snap = await get(ref(db, 'users/' + u));
+            if(snap.exists()) return alert("Username sudah dipakai!");
+
+            const newID = "VLT-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+            await set(ref(db, 'users/' + u), { 
+                password: p, id: newID, balance: 0, 
+                country: document.getElementById('reg-country').value || "Indonesia", 
+                device_locked: true, is_frozen: false, status: "offline" 
+            });
+            localStorage.setItem('vault_user_lock', u);
+            location.reload();
+        };
+
+        document.getElementById('btn-login').onclick = async () => {
+            const u = document.getElementById('login-user').value.trim();
+            const p = document.getElementById('login-pass').value;
+            const snap = await get(ref(db, 'users/' + u));
+            
+            if(snap.exists() && snap.val().password === p) {
+                const data = snap.val();
+                const lock = localStorage.getItem('vault_user_lock');
+                if (data.device_locked && lock && lock !== u) return alert("DENIED: Perangkat terkunci untuk " + lock);
+                
+                localStorage.setItem('vault_user_lock', u);
+                user = { name: u, ...data };
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                initSystem();
+            } else { alert("Login Salah!"); }
+        };
+
+        // --- SYSTEM CORE ---
+        function initSystem() {
+            document.getElementById('display-id').innerText = user.id;
+            update(ref(db, `users/${user.name}`), { status: "online" });
+            window.addEventListener('beforeunload', () => update(ref(db, `users/${user.name}`), { status: "offline" }));
+
+            // Chart Setup
+            const ctx = document.getElementById('txChart').getContext('2d');
+            txChart = new Chart(ctx, { 
+                type: 'line', 
+                data: { labels: [], datasets: [{ data: [], borderColor: '#00ff41', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(0, 255, 65, 0.1)', tension: 0.4 }] }, 
+                options: { responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{beginAtZero:true, ticks:{color:'#333', font:{size:8}}}} } 
+            });
+
+            // Watcher Users
+            onValue(ref(db, 'users'), (snap) => {
+                const all = snap.val(); if(!all) return;
+                const sorted = Object.entries(all).map(([n, d]) => ({ n, b: d.balance, s: d.status })).sort((a,b)=>b.b-a.b);
+                document.getElementById('leaderboard-box').innerHTML = sorted.map((u,i)=> `<div><span style="color:${u.s==='online'?'#27c93f':'#ff5f56'}">●</span> #${i+1} ${u.n} <span style="float:right">${formatN(u.b)}</span></div>`).join('');
+                
+                const me = all[user.name];
+                if(user.balance < me.balance && user.balance !== 0 && !miningInterval) playSound('sound-money');
+                user.balance = me.balance; user.is_frozen = me.is_frozen;
+            });
+
+            // Watcher Blockchain
+            onValue(ref(db, 'blockchain'), (snap) => {
+                const b = snap.val(); if(!b) return;
+                const txs = Object.values(b).slice(-15);
+                txChart.data.labels = txs.map(t => t.time); txChart.data.datasets[0].data = txs.map(t => t.amt); txChart.update();
+            });
+
+            // Watcher Chat
+            onValue(ref(db, 'messages'), (snap) => {
+                const m = snap.val();
+                const cb = document.getElementById('chat-box');
+                cb.innerHTML = m ? Object.values(m).map(x=>`<div><span style="color:#ffbd2e">${x.user}</span>: ${x.text}</div>`).join('') : "";
+                cb.scrollTop = cb.scrollHeight;
+            });
+
+            printLogo();
+        }
+
+        function printLogo() {
+            document.getElementById('history').innerHTML += `<pre style="font-size:7px; color:#00ff41;">
+██╗   ██╗ █████╗ ██╗   ██╗██╗     ████████╗
+██║   ██║██╔══██╗██║   ██║██║     ╚══██╔══╝
+██║   ██║███████║██║   ██║██║        ██║   
+╚██╗ ██╔╝██╔══██║██║   ██║██║        ██║   
+ ╚████╔╝ ██║  ██║╚██████╔╝███████╗   ██║   </pre>
+ <p style="color:#ffbd2e">CONNECTED AS: ${user.name} | ACCESS: GRANTED</p><hr style="border-top:1px dashed #222">`;
+        }
+
+        // --- COMMAND ENGINE ---
+        document.getElementById('user-input').onkeypress = async (e) => {
+            if(e.key === 'Enter') {
+                const input = e.target.value.trim();
+                const pts = input.split(' ');
+                const cmd = pts[0].toLowerCase();
+                const hist = document.getElementById('history');
+                hist.innerHTML += `<div><span style="color:#444">$</span> ${input}</div>`;
+                e.target.value = "";
+
+                if (cmd === 'help') {
+                    hist.innerHTML += `
+                    <div style="color:#00ff41; font-size:11px; margin:10px 0; border:1px solid #1a1a1a; padding:10px; border-radius:5px; background: rgba(0,255,65,0.02);">
+                        <p style="color:#ffbd2e; font-weight:bold;">VAULT COMMANDS</p>
+                        <p>> balance | clear | transfer [ID] [AMT]</p>
+                        ${user.name === "MasterHafiz" ? `
+                        <div style="margin-top:5px; border-top:1px dashed #333; padding-top:5px; color:#ff5f56">
+                            <p>> mine start/stop | deposit [AMT]</p>
+                            <p>> /freeze [user] | /unfreeze [user] | sudo_reset_user [user]</p>
+                        </div>` : ""}
+                    </div>`;
+                }
+                else if(cmd === 'balance') hist.innerHTML += `<p>WALLET: <span class="highlight">${formatN(user.balance)}</span></p>`;
+                else if(cmd === 'clear') hist.innerHTML = "";
+                
+                // ADMIN: MINE
+                else if(cmd === 'mine' && user.name === "MasterHafiz") {
+                    if(pts[1] === 'start') {
+                        if(miningInterval) return;
+                        hist.innerHTML += `<p style="color:#00ff41">[SYSTEM] Mining Aktif (Suara Senyap).</p>`;
+                        miningInterval = setInterval(() => {
+                            update(ref(db, `users/${user.name}`), { balance: user.balance + 0.02 });
+                            const idT = document.getElementById('display-id');
+                            idT.style.color = "#00ff41"; setTimeout(() => idT.style.color = "#ffbd2e", 500);
+                        }, 5000);
+                    } else {
+                        clearInterval(miningInterval); miningInterval = null;
+                        hist.innerHTML += `<p style="color:#ff5f56">[SYSTEM] Mining Berhenti (Suara Aktif).</p>`;
+                    }
+                }
+
+                // TRANSFER
+                else if(cmd === 'transfer') {
+                    if(user.is_frozen) return hist.innerHTML += `<p style="color:red">ERR: Account Frozen.</p>`;
+                    const idT = pts[1]; const amt = parseFloat(pts[2]);
+                    const snap = await get(ref(db, 'users'));
+                    let target = null;
+                    Object.entries(snap.val()).forEach(([n, d]) => { if(d.id === idT) target = n; });
+                    
+                    if(target && amt > 0 && amt <= user.balance) {
+                        await showLoading(hist);
+                        set(ref(db, `users/${user.name}/balance`), user.balance - amt);
+                        const tSnap = await get(ref(db, `users/${target}/balance`));
+                        set(ref(db, `users/${target}/balance`), (tSnap.val() || 0) + amt);
+                        push(ref(db, 'blockchain'), { amt, time: new Date().toLocaleTimeString() });
+                        playSound('sound-success');
+                    } else { hist.innerHTML += `<p style="color:red">[ERR] Cek ID/Saldo.</p>`; }
+                }
+
+                // ADMIN COMMANDS
+                else if(cmd === 'deposit' && user.name === "MasterHafiz") {
+                    const amt = parseFloat(pts[1]);
+                    if(amt) {
+                        await showLoading(hist);
+                        set(ref(db, `users/${user.name}/balance`), user.balance + amt);
+                        push(ref(db, 'blockchain'), { amt, time: new Date().toLocaleTimeString() });
+                    }
+                }
+                else if(cmd === '/freeze' && user.name === "MasterHafiz") {
+                    update(ref(db, `users/${pts[1]}`), { is_frozen: true });
+                    hist.innerHTML += `<p style="color:red">[OK] ${pts[1]} Frozen.</p>`;
+                }
+                else if(cmd === '/unfreeze' && user.name === "MasterHafiz") {
+                    update(ref(db, `users/${pts[1]}`), { is_frozen: false });
+                    hist.innerHTML += `<p style="color:#00ff41">[OK] ${pts[1]} Active.</p>`;
+                }
+                else if(cmd === 'sudo_reset_user' && user.name === "MasterHafiz") {
+                    update(ref(db, `users/${pts[1]}`), { device_locked: false });
+                    hist.innerHTML += `<p style="color:#ffbd2e">[OK] Device Reset for ${pts[1]}.</p>`;
+                }
+
+                scrollBottom();
+            }
+        };
+
+        document.getElementById('chat-input').onkeypress = (e) => {
+            if(e.key === 'Enter' && e.target.value) {
+                push(ref(db, 'messages'), { user: user.name, text: e.target.value });
+                e.target.value = "";
+            }
+        };
+    </script>
+</body>
+</html>
