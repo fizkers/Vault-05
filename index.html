@@ -8,7 +8,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: #020205; color: #00ff41; font-family: 'Fira Code', monospace; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+        body { background: #020205; color: #00ff41; font-family: 'Fira Code', monospace; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; overflow: hidden; }
         
         .main-layout { display: grid; grid-template-columns: 2.5fr 1fr; gap: 15px; width: 100%; max-width: 1200px; height: 90vh; }
         .terminal-container { background: rgba(13, 13, 20, 0.95); border: 1px solid #1a1a2e; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0, 255, 65, 0.1); overflow: hidden; }
@@ -26,14 +26,16 @@
 
         .auth-box { max-width: 400px; margin: auto; width: 100%; border: 1px solid #00d2ff; }
         .input-line { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid #1a1a2e; padding-bottom: 5px; }
-        input { background: transparent; border: none; color: #fff; font-family: 'Fira Code'; outline: none; width: 100%; font-size: 14px; }
+        input { background: transparent; border: none; color: #fff; font-family: 'Fira Code'; outline: none; width: 100%; font-size: 16px; }
         .term-btn { flex: 1; background: transparent; border: 1px solid #00d2ff; color: #00d2ff; padding: 10px; cursor: pointer; font-family: 'Fira Code'; font-size: 11px; transition: 0.3s; border-radius: 4px; }
-        .term-btn:hover { background: #00d2ff; color: #000; box-shadow: 0 0 15px #00d2ff; }
 
         .sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
         .sidebar-box { flex: 1; min-height: 180px; }
         #chat-box { font-size: 11px; line-height: 1.6; color: #a0a0c0; }
-        .chat-in { padding: 12px; background: #080810; border-top: 1px solid #1a1a2e; font-size: 12px; color: #fff; outline: none; border: none; width: 100%; }
+        
+        /* Mobile enter support & layout fix */
+        .cmd-line-form, .chat-form { display: flex; width: 100%; background: #080810; padding: 12px; border-top: 1px solid #1a1a2e; align-items: center; }
+        .chat-in { font-size: 14px; color: #fff; outline: none; border: none; width: 100%; background: transparent; }
         
         .c-cyan { color: #00d2ff; text-shadow: 0 0 5px #00d2ff; }
         .c-purple { color: #d442f5; text-shadow: 0 0 5px #d442f5; }
@@ -43,7 +45,12 @@
         .prompt { color: #00d2ff; margin-right: 10px; font-weight: bold; }
         .tx-log { font-size: 11px; margin: 5px 0; padding: 5px; border-left: 2px solid #1a1a2e; background: rgba(255,255,255,0.02); }
 
-        @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; height: auto; display: block; } .terminal-container { margin-bottom: 15px; height: 400px; } }
+        @media (max-width: 900px) { 
+            .main-layout { grid-template-columns: 1fr; height: 98dvh; display: flex; flex-direction: column; } 
+            .terminal-container { flex: 2; margin-bottom: 10px; height: auto; } 
+            .sidebar { flex: 1.5; overflow-y: auto; gap: 10px; }
+            .sidebar-box { min-height: 120px; }
+        }
     </style>
 </head>
 <body>
@@ -66,15 +73,18 @@
 
     <div id="main-app" style="display:none; width: 100%; max-width: 1200px;">
         <div class="main-layout">
-            <div class="terminal-container" style="border-color: #1a1a2e;">
+            <div class="terminal-container">
                 <div class="terminal-header">
                     <div class="buttons"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
                     <div class="title">CORE@VAULT-05 — <span id="display-id" class="c-gold"></span></div>
                 </div>
                 <div class="terminal-body" id="term-scroll">
                     <div id="history"></div>
-                    <div class="command-line"><span class="prompt">>>></span><input type="text" id="user-input" autofocus autocomplete="off" spellcheck="false"></div>
                 </div>
+                <form id="terminal-form" class="cmd-line-form">
+                    <span class="prompt">>>></span>
+                    <input type="text" id="user-input" autofocus autocomplete="off" spellcheck="false" enterkeyhint="send">
+                </form>
             </div>
             <div class="sidebar">
                 <div class="terminal-container sidebar-box" style="border-color:#00d2ff">
@@ -87,7 +97,9 @@
                 <div class="terminal-container sidebar-box">
                     <div class="terminal-header"><div class="title c-purple">ENCRYPTED CHAT</div></div>
                     <div class="terminal-body" id="chat-box"></div>
-                    <input type="text" id="chat-input" placeholder="Secure transmission..." class="chat-in">
+                    <form id="chat-form-box" class="chat-form">
+                        <input type="text" id="chat-input" placeholder="Secure transmission..." class="chat-in" enterkeyhint="send">
+                    </form>
                 </div>
                 <div class="terminal-container sidebar-box">
                     <div class="terminal-header"><div class="title">NETWORK NODES</div></div>
@@ -103,9 +115,7 @@
 
         const firebaseConfig = {
             apiKey: "AIzaSyDZe0QP2l2nAjw6qeYUE9wkryMTAnC6N_0",
-            authDomain: "vault-blockchain.firebaseapp.com",
-            databaseURL: "https://vault-blockchain-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "vault-blockchain"
+            databaseURL: "https://vault-blockchain-default-rtdb.asia-southeast1.firebasedatabase.app"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -128,7 +138,7 @@
         };
 
         const printWelcome = () => {
-            document.getElementById('history').innerHTML += `<pre class="c-cyan">
+            document.getElementById('history').innerHTML += `<pre class="c-cyan" style="font-size: 10px;">
 ██╗   ██╗ █████╗ ██╗   ██╗██╗     ████████╗
 ██║   ██║██╔══██╗██║   ██║██║     ╚══██╔══╝
 ██║   ██║███████║██║   ██║██║        ██║   
@@ -138,7 +148,6 @@
             scrollBottom();
         };
 
-        // --- AUTH ---
         document.getElementById('btn-reg-toggle').onclick = () => {
             document.getElementById('reg-fields').style.display = 'block';
             document.getElementById('btn-login').style.display = 'none';
@@ -151,13 +160,10 @@
             const cp = document.getElementById('reg-pass-confirm').value;
             if(!u || !p) return alert("Fill all fields");
             if(p !== cp) return alert("Pass mismatch");
-            
             const snap = await get(ref(db, 'users/'+u));
             if(snap.exists()) return alert("User already exists");
-
             const id = "VLT-" + Math.random().toString(36).substring(2, 6).toUpperCase();
             await set(ref(db, 'users/'+u), { password:p, id:id, balance:0, vlt_stock:0, is_frozen:false, online:false });
-            alert("Identity Created. Accessing...");
             location.reload();
         };
 
@@ -202,9 +208,7 @@
             onValue(ref(db, 'messages'), (snap) => {
                 const data = snap.val(); if(!data) return;
                 document.getElementById('chat-box').innerHTML = Object.values(data).slice(-15).map(m => {
-                    if(m.type === 'private' && (m.to === user.name || m.user === user.name)) {
-                        return `<div class="c-purple">[PM] ${m.user}: ${m.text}</div>`;
-                    }
+                    if(m.type === 'private' && (m.to === user.name || m.user === user.name)) return `<div class="c-purple">[PM] ${m.user}: ${m.text}</div>`;
                     if(!m.type) return `<div><span class="c-gold">${m.user}</span>: ${m.text}</div>`;
                     return "";
                 }).join('');
@@ -222,94 +226,89 @@
             }, 3000);
         }
 
-        document.getElementById('user-input').onkeydown = async (e) => {
-            if(e.key === 'Enter') {
-                const val = e.target.value.trim(); const pts = val.split(' '); const cmd = pts[0].toLowerCase();
-                const hist = document.getElementById('history'); if(!val) return;
-                hist.innerHTML += `<div><span class="c-cyan">>>></span> ${val}</div>`; e.target.value = "";
+        // --- FORM HANDLER (ENTER FIX) ---
+        document.getElementById('terminal-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const inputEl = document.getElementById('user-input');
+            const val = inputEl.value.trim(); const pts = val.split(' '); const cmd = pts[0].toLowerCase();
+            const hist = document.getElementById('history'); if(!val) return;
+            hist.innerHTML += `<div><span class="c-cyan">>>></span> ${val}</div>`; inputEl.value = "";
 
-                if(cmd === 'help') {
-                    hist.innerHTML += `<div style="border:1px solid #1a1a2e; padding:10px; margin:5px 0; font-size:11px;">
-                        <p class="c-cyan">USER: balance, buy [qty], sell [qty], transfer [ID] [AMT], history, /pm [user] [msg], clear</p>
-                        ${user.name === "MasterHafiz" ? `<p class="c-gold">MASTER: mine start/stop, deposit [AMT], /freeze [user], /unfreeze [user], sudo_clear_chat, logout_force</p>` : ""}
-                    </div>`;
-                }
-                else if(cmd === 'balance') hist.innerHTML += `<p class="c-gold">BALANCE: <span class="highlight">Rp${formatN(user.balance)}</span> | ASSETS: <span class="c-cyan">${user.vlt_stock} VLT</span></p>`;
-                else if(cmd === 'clear') { hist.innerHTML = ""; printWelcome(); }
-                else if(cmd === 'buy' || cmd === 'sell') {
-                    const qty = parseInt(pts[1]); const cost = qty * marketPrice;
-                    if(cmd === 'buy' && user.balance >= cost) {
-                        await update(ref(db, `users/${user.name}`), { balance: user.balance - cost, vlt_stock: user.vlt_stock + qty });
-                        hist.innerHTML += `<p class="c-cyan">✓ SUCCESS: ACQUIRED ${qty} VLT ASSETS.</p>`;
-                    } else if(cmd === 'sell' && user.vlt_stock >= qty) {
-                        await update(ref(db, `users/${user.name}`), { balance: user.balance + cost, vlt_stock: user.vlt_stock - qty });
-                        hist.innerHTML += `<p class="c-cyan">✓ SUCCESS: LIQUIDATED ${qty} VLT ASSETS.</p>`;
-                    } else hist.innerHTML += `<p class="c-red">FAILED: INSUFFICIENT RESOURCES.</p>`;
-                }
-                else if(cmd === 'transfer') {
-                    if(user.is_frozen) { hist.innerHTML += `<p class="c-red">ERROR: ACCOUNT IS FROZEN BY MASTER.</p>`; return; }
-                    const tid = pts[1]?.toUpperCase(); const amt = parseFloat(pts[2]);
-                    const snap = await get(ref(db, 'users'));
-                    const targetData = Object.entries(snap.val()).find(([n, d]) => d.id === tid);
-                    if(targetData && amt > 0 && user.balance >= amt) {
-                        await showLoading("ENCRYPTING TRANSACTION");
-                        await update(ref(db, `users/${user.name}`), { balance: user.balance - amt });
-                        await update(ref(db, `users/${targetData[0]}`), { balance: targetData[1].balance + amt });
-                        push(ref(db, 'history'), { from: user.name, to: targetData[0], amt, time: new Date().toLocaleTimeString() });
-                        playS('sound-success');
-                    } else hist.innerHTML += `<p class="c-red">TRANSACTION DENIED: INVALID DATA.</p>`;
-                }
-                else if(cmd === '/pm') {
-                    const to = pts[1]; const m = pts.slice(2).join(' ');
-                    if(to && m) push(ref(db, 'messages'), { user:user.name, to, text:m, type:'private' });
-                }
-                else if(cmd === 'history') {
-                    const snap = await get(ref(db, 'history'));
-                    if(snap.exists()) {
-                        hist.innerHTML += `<p class="c-cyan">-- TRANSACTION LOGS --</p>`;
-                        Object.values(snap.val()).slice(-10).forEach(t => {
-                            if(t.from === user.name || t.to === user.name) 
-                                hist.innerHTML += `<div class="tx-log">[${t.time}] ${t.from} → ${t.to} | Rp${formatN(t.amt)}</div>`;
-                        });
-                    }
-                }
-                if(user.name === "MasterHafiz") {
-                    if(cmd === 'deposit') {
-                        const amt = parseFloat(pts[1]);
-                        await update(ref(db, `users/${user.name}`), { balance: user.balance + amt });
-                        hist.innerHTML += `<p class="c-gold">MASTER: DEPOSIT Rp${formatN(amt)} CONFIRMED.</p>`;
-                    }
-                    else if(cmd === 'mine') {
-                        if(pts[1] === 'start') {
-                            if(!miningInterval) miningInterval = setInterval(()=> update(ref(db, `users/${user.name}`), { balance: user.balance + 5000 }), 3000);
-                            hist.innerHTML += `<p class="c-gold">MINING: ACTIVE</p>`;
-                        } else { clearInterval(miningInterval); miningInterval=null; hist.innerHTML += `<p class="c-red">MINING: STOPPED</p>`; }
-                    }
-                    else if(cmd === '/freeze') {
-                        update(ref(db, `users/${pts[1]}`), { is_frozen: true });
-                        hist.innerHTML += `<p class="c-red">TARGET FROZEN: ${pts[1]}</p>`;
-                    }
-                    else if(cmd === '/unfreeze') {
-                        update(ref(db, `users/${pts[1]}`), { is_frozen: false });
-                        hist.innerHTML += `<p class="c-cyan">TARGET RELEASED: ${pts[1]}</p>`;
-                    }
-                    else if(cmd === 'sudo_clear_chat') {
-                        await remove(ref(db, 'messages'));
-                        hist.innerHTML += `<p class="c-gold">DATABASE: CHAT PURGED.</p>`;
-                    }
-                    else if(cmd === 'logout_force') {
-                        update(ref(db, `users/${user.name}`), { online: false });
-                        location.reload();
-                    }
-                }
-                scrollBottom();
+            if(cmd === 'help') {
+                hist.innerHTML += `<div style="border:1px solid #1a1a2e; padding:10px; margin:5px 0; font-size:11px;">
+                    <p class="c-cyan">USER: balance, buy [qty], sell [qty], transfer [ID] [AMT], history, /pm [user] [msg], clear</p>
+                    ${user.name === "MasterHafiz" ? `<p class="c-gold">MASTER: mine start/stop, deposit [AMT], /freeze [user], /unfreeze [user], sudo_clear_chat, logout_force</p>` : ""}
+                </div>`;
             }
+            else if(cmd === 'balance') hist.innerHTML += `<p class="c-gold">BALANCE: <span class="highlight">Rp${formatN(user.balance)}</span> | ASSETS: <span class="c-cyan">${user.vlt_stock} VLT</span></p>`;
+            else if(cmd === 'clear') { hist.innerHTML = ""; printWelcome(); }
+            else if(cmd === 'buy' || cmd === 'sell') {
+                const qty = parseInt(pts[1]); const cost = qty * marketPrice;
+                if(cmd === 'buy' && user.balance >= cost) {
+                    await update(ref(db, `users/${user.name}`), { balance: user.balance - cost, vlt_stock: user.vlt_stock + qty });
+                    hist.innerHTML += `<p class="c-cyan">✓ SUCCESS: ACQUIRED ${qty} VLT.</p>`;
+                } else if(cmd === 'sell' && user.vlt_stock >= qty) {
+                    await update(ref(db, `users/${user.name}`), { balance: user.balance + cost, vlt_stock: user.vlt_stock - qty });
+                    hist.innerHTML += `<p class="c-cyan">✓ SUCCESS: LIQUIDATED ${qty} VLT.</p>`;
+                } else hist.innerHTML += `<p class="c-red">FAILED: INSUFFICIENT RESOURCES.</p>`;
+            }
+            else if(cmd === 'transfer') {
+                if(user.is_frozen) { hist.innerHTML += `<p class="c-red">ERROR: ACCOUNT IS FROZEN.</p>`; return; }
+                const tid = pts[1]?.toUpperCase(); const amt = parseFloat(pts[2]);
+                const snap = await get(ref(db, 'users'));
+                const targetData = Object.entries(snap.val()).find(([n, d]) => d.id === tid);
+                if(targetData && amt > 0 && user.balance >= amt) {
+                    await showLoading("ENCRYPTING");
+                    await update(ref(db, `users/${user.name}`), { balance: user.balance - amt });
+                    await update(ref(db, `users/${targetData[0]}`), { balance: targetData[1].balance + amt });
+                    push(ref(db, 'history'), { from: user.name, to: targetData[0], amt, time: new Date().toLocaleTimeString() });
+                    playS('sound-success');
+                } else hist.innerHTML += `<p class="c-red">TRANSACTION DENIED.</p>`;
+            }
+            else if(cmd === '/pm') {
+                const to = pts[1]; const m = pts.slice(2).join(' ');
+                if(to && m) push(ref(db, 'messages'), { user:user.name, to, text:m, type:'private' });
+            }
+            else if(cmd === 'history') {
+                const snap = await get(ref(db, 'history'));
+                if(snap.exists()) {
+                    hist.innerHTML += `<p class="c-cyan">-- LOGS --</p>`;
+                    Object.values(snap.val()).slice(-10).forEach(t => {
+                        if(t.from === user.name || t.to === user.name) hist.innerHTML += `<div class="tx-log">[${t.time}] ${t.from} → ${t.to} | Rp${formatN(t.amt)}</div>`;
+                    });
+                }
+            }
+            // MASTER ONLY
+            if(user.name === "MasterHafiz") {
+                if(cmd === 'deposit') {
+                    const amt = parseFloat(pts[1]);
+                    const current = await get(ref(db, `users/${user.name}`));
+                    await update(ref(db, `users/${user.name}`), { balance: current.val().balance + amt });
+                    hist.innerHTML += `<p class="c-gold">MASTER: DEPOSIT Rp${formatN(amt)} CONFIRMED.</p>`;
+                }
+                else if(cmd === 'mine') {
+                    if(pts[1] === 'start') {
+                        if(!miningInterval) miningInterval = setInterval(async ()=> {
+                            const cur = await get(ref(db, `users/${user.name}`));
+                            update(ref(db, `users/${user.name}`), { balance: cur.val().balance + 5000 });
+                        }, 3000);
+                        hist.innerHTML += `<p class="c-gold">MINING: ACTIVE</p>`;
+                    } else { clearInterval(miningInterval); miningInterval=null; hist.innerHTML += `<p class="c-red">MINING: STOPPED</p>`; }
+                }
+                else if(cmd === '/freeze') { update(ref(db, `users/${pts[1]}`), { is_frozen: true }); hist.innerHTML += `<p class="c-red">FROZEN: ${pts[1]}</p>`; }
+                else if(cmd === '/unfreeze') { update(ref(db, `users/${pts[1]}`), { is_frozen: false }); hist.innerHTML += `<p class="c-cyan">RELEASED: ${pts[1]}</p>`; }
+                else if(cmd === 'sudo_clear_chat') { await remove(ref(db, 'messages')); hist.innerHTML += `<p class="c-gold">CHAT PURGED.</p>`; }
+                else if(cmd === 'logout_force') { update(ref(db, `users/${user.name}`), { online: false }); location.reload(); }
+            }
+            scrollBottom();
         };
 
-        document.getElementById('chat-input').onkeydown = (e) => {
-            if(e.key === 'Enter' && e.target.value) {
-                push(ref(db, 'messages'), { user: user.name, text: e.target.value });
-                e.target.value = "";
+        document.getElementById('chat-form-box').onsubmit = (e) => {
+            e.preventDefault();
+            const inp = document.getElementById('chat-input');
+            if(inp.value) {
+                push(ref(db, 'messages'), { user: user.name, text: inp.value });
+                inp.value = "";
             }
         };
     </script>
