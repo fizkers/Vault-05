@@ -3,53 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VAULT-05 | SECURE OS</title>
+    <title>VAULT-05 | NEON SECURE OS</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: #050505; color: #00ff41; font-family: 'Fira Code', monospace; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        body { background: #020205; color: #00ff41; font-family: 'Fira Code', monospace; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
         
         .main-layout { display: grid; grid-template-columns: 2.5fr 1fr; gap: 15px; width: 100%; max-width: 1200px; height: 90vh; }
-        .terminal-container { background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
-        .terminal-header { background: #1a1a1a; padding: 12px; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+        .terminal-container { background: rgba(13, 13, 20, 0.95); border: 1px solid #1a1a2e; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0, 255, 65, 0.1); overflow: hidden; }
+        .terminal-header { background: #161625; padding: 12px; display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 1px solid #1a1a2e; }
         .buttons { display: flex; gap: 6px; position: absolute; left: 15px; }
         .dot { width: 8px; height: 8px; border-radius: 50%; }
-        .red { background: #ff5f56; } .yellow { background: #ffbd2e; } .green { background: #27c93f; }
-        .title { color: #666; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        .red { background: #ff5f56; box-shadow: 0 0 5px #ff5f56; } 
+        .yellow { background: #ffbd2e; box-shadow: 0 0 5px #ffbd2e; } 
+        .green { background: #27c93f; box-shadow: 0 0 5px #27c93f; }
+        .title { color: #505070; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
 
         .terminal-body { padding: 15px; overflow-y: auto; font-size: 13px; flex-grow: 1; scroll-behavior: smooth; }
         .terminal-body::-webkit-scrollbar { width: 4px; }
-        .terminal-body::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+        .terminal-body::-webkit-scrollbar-thumb { background: #1a1a2e; border-radius: 10px; }
 
-        .auth-box { max-width: 400px; margin: auto; width: 100%; }
-        .input-line { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid #1a1a1a; padding-bottom: 5px; }
+        .auth-box { max-width: 400px; margin: auto; width: 100%; border: 1px solid #00d2ff; }
+        .input-line { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid #1a1a2e; padding-bottom: 5px; }
         input { background: transparent; border: none; color: #fff; font-family: 'Fira Code'; outline: none; width: 100%; font-size: 14px; }
-        
-        .term-btn { flex: 1; background: transparent; border: 1px solid #00ff41; color: #00ff41; padding: 10px; cursor: pointer; font-family: 'Fira Code'; font-size: 11px; border-radius: 4px; transition: 0.2s; }
-        .term-btn:hover { background: #00ff41; color: #000; }
+        .term-btn { flex: 1; background: transparent; border: 1px solid #00d2ff; color: #00d2ff; padding: 10px; cursor: pointer; font-family: 'Fira Code'; font-size: 11px; transition: 0.3s; border-radius: 4px; }
+        .term-btn:hover { background: #00d2ff; color: #000; box-shadow: 0 0 15px #00d2ff; }
 
         .sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
         .sidebar-box { flex: 1; min-height: 180px; }
-        #chat-box, #leaderboard-box { font-size: 11px; line-height: 1.6; }
-        .chat-in { padding: 12px; background: #080808; border-top: 1px solid #1a1a1a; font-size: 12px; color: #fff; outline: none; border: none; width: 100%; }
+        #chat-box { font-size: 11px; line-height: 1.6; color: #a0a0c0; }
+        .chat-in { padding: 12px; background: #080810; border-top: 1px solid #1a1a2e; font-size: 12px; color: #fff; outline: none; border: none; width: 100%; }
+        
+        .c-cyan { color: #00d2ff; text-shadow: 0 0 5px #00d2ff; }
+        .c-purple { color: #d442f5; text-shadow: 0 0 5px #d442f5; }
+        .c-gold { color: #ffbd2e; text-shadow: 0 0 5px #ffbd2e; }
+        .c-red { color: #ff5f56; text-shadow: 0 0 5px #ff5f56; }
+        .highlight { color: #fff; text-shadow: 0 0 8px #00ff41; }
+        .prompt { color: #00d2ff; margin-right: 10px; font-weight: bold; }
+        .tx-log { font-size: 11px; margin: 5px 0; padding: 5px; border-left: 2px solid #1a1a2e; background: rgba(255,255,255,0.02); }
 
-        .highlight { color: #fff; text-shadow: 0 0 5px #00ff41; }
-        .command-line { display: flex; align-items: center; padding-top: 10px; }
-        .prompt { color: #00ff41; margin-right: 10px; font-weight: bold; }
-
-        pre { font-size: 8px; line-height: 1.2; color: #00ff41; margin: 10px 0; font-family: monospace; }
-        .tx-log { font-size: 11px; margin: 5px 0; padding: 5px; border-left: 2px solid #333; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .status-dot { font-size: 9px; margin-right: 5px; }
-
-        @media (max-width: 900px) { 
-            .main-layout { grid-template-columns: 1fr; height: auto; display: block; } 
-            .terminal-container { margin-bottom: 15px; height: 450px; } 
-            .sidebar-box { height: 250px; } 
-            body { overflow-y: auto; display: block; padding: 10px; }
-            pre { font-size: 5px; }
-        }
+        @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; height: auto; display: block; } .terminal-container { margin-bottom: 15px; height: 400px; } }
     </style>
 </head>
 <body>
@@ -57,41 +51,47 @@
     <audio id="sound-money" src="https://assets.mixkit.co/active_storage/sfx/1614/1614-preview.mp3" preload="auto"></audio>
 
     <div id="login-screen" class="terminal-container auth-box">
-        <div class="terminal-header"><div class="buttons"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="title">VAULT SECURE ACCESS</div></div>
+        <div class="terminal-header"><div class="buttons"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="title">VAULT AUTHENTICATION</div></div>
         <div class="terminal-body">
-            <div class="input-line"><span>USER-ID</span><input type="text" id="login-user" autocomplete="off"></div>
-            <div class="input-line"><span>PASSWORD</span><input type="password" id="login-pass"></div>
-            <div id="reg-fields" style="display:none;"><div class="input-line"><span>RE-PASSWORD</span><input type="password" id="reg-pass-confirm"></div></div>
+            <div class="input-line"><span>USER</span><input type="text" id="login-user" autocomplete="off"></div>
+            <div class="input-line"><span>PASS</span><input type="password" id="login-pass"></div>
+            <div id="reg-fields" style="display:none;"><div class="input-line"><span>RE-P</span><input type="password" id="reg-pass-confirm"></div></div>
             <div style="display:flex; gap:10px; margin-top:15px;">
-                <button id="btn-login" class="term-btn">LOGIN</button>
-                <button id="btn-reg-toggle" class="term-btn">SIGN UP</button>
-                <button id="btn-reg-final" class="term-btn" style="display:none;">CREATE</button>
+                <button id="btn-login" class="term-btn">ACCESS</button>
+                <button id="btn-reg-toggle" class="term-btn" style="border-color:#ffbd2e; color:#ffbd2e;">NEW IDENTITY</button>
+                <button id="btn-reg-final" class="term-btn" style="display:none;">INITIALIZE</button>
             </div>
         </div>
     </div>
 
     <div id="main-app" style="display:none; width: 100%; max-width: 1200px;">
         <div class="main-layout">
-            <div class="terminal-container">
+            <div class="terminal-container" style="border-color: #1a1a2e;">
                 <div class="terminal-header">
                     <div class="buttons"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
-                    <div class="title">TERMINAL@VAULT — <span id="display-id" style="color:#ffbd2e"></span></div>
+                    <div class="title">CORE@VAULT-05 — <span id="display-id" class="c-gold"></span></div>
                 </div>
                 <div class="terminal-body" id="term-scroll">
                     <div id="history"></div>
-                    <div class="command-line"><span class="prompt">$</span><input type="text" id="user-input" autofocus autocomplete="off" spellcheck="false" enterkeyhint="send"></div>
+                    <div class="command-line"><span class="prompt">>>></span><input type="text" id="user-input" autofocus autocomplete="off" spellcheck="false"></div>
                 </div>
             </div>
             <div class="sidebar">
-                <div class="terminal-container sidebar-box"><div class="terminal-header"><div class="title">NETWORK TRAFFIC</div></div><div class="terminal-body"><canvas id="txChart"></canvas></div></div>
-                <div class="terminal-container sidebar-box">
-                    <div class="terminal-header"><div class="title">ENCRYPTED CHAT</div></div>
-                    <div class="terminal-body" id="chat-box"></div>
-                    <input type="text" id="chat-input" placeholder="Secure message..." class="chat-in" enterkeyhint="send">
+                <div class="terminal-container sidebar-box" style="border-color:#00d2ff">
+                    <div class="terminal-header"><div class="title c-cyan">MARKET INDEX</div></div>
+                    <div class="terminal-body" style="text-align: center; background: radial-gradient(circle at center, #0a0a1a 0%, #020205 100%);">
+                        <div id="vlt-price" style="font-size: 22px; font-weight: bold; margin-bottom: 5px;">Rp1.000</div>
+                        <canvas id="marketChart" style="max-height: 90px;"></canvas>
+                    </div>
                 </div>
                 <div class="terminal-container sidebar-box">
-                    <div class="terminal-header"><div class="title">VAULT RANK [<span id="user-count" style="color:#00ff41">0</span>]</div></div>
-                    <div class="terminal-body" id="leaderboard-box"></div>
+                    <div class="terminal-header"><div class="title c-purple">ENCRYPTED CHAT</div></div>
+                    <div class="terminal-body" id="chat-box"></div>
+                    <input type="text" id="chat-input" placeholder="Secure transmission..." class="chat-in">
+                </div>
+                <div class="terminal-container sidebar-box">
+                    <div class="terminal-header"><div class="title">NETWORK NODES</div></div>
+                    <div class="terminal-body" id="leaderboard-box" style="font-size:10px;"></div>
                 </div>
             </div>
         </div>
@@ -99,228 +99,219 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, get, onValue, push, update, limitToLast, query, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, get, onValue, push, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDZe0QP2l2nAjw6qeYUE9wkryMTAnC6N_0",
             authDomain: "vault-blockchain.firebaseapp.com",
             databaseURL: "https://vault-blockchain-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "vault-blockchain",
-            storageBucket: "vault-blockchain.firebasestorage.app",
-            messagingSenderId: "297566281394",
-            appId: "1:297566281394:web:b7b7257551dfe5f69bb3ab"
+            projectId: "vault-blockchain"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        let user = { name: "", id: "", balance: 0, is_frozen: false };
-        let txChart;
-        let miningInterval = null;
+        let user = null, mChart, marketPrice = 1000, miningInterval = null;
 
         const formatN = (num) => Number(num).toLocaleString('id-ID');
-        const playSound = (id) => document.getElementById(id).play().catch(()=>{});
-        const scrollBottom = () => { const area = document.getElementById('term-scroll'); setTimeout(() => { area.scrollTop = area.scrollHeight; }, 50); };
+        const scrollBottom = () => { const a = document.getElementById('term-scroll'); a.scrollTop = a.scrollHeight; };
+        const playS = (id) => document.getElementById(id).play().catch(()=>{});
 
-        const showLoading = (hist, text = "SYNCING") => {
+        const showLoading = (text = "PROCESSING") => {
             return new Promise((resolve) => {
-                let pct = 0; const line = document.createElement('div'); hist.appendChild(line);
+                let pct = 0; const h = document.getElementById('history');
+                const l = document.createElement('div'); h.appendChild(l);
                 const inv = setInterval(() => {
-                    pct += 10; line.innerHTML = `<span style="color:#ffbd2e">${text}: [${'#'.repeat(pct/10)}${'.'.repeat(10-pct/10)}] ${pct}%</span>`;
-                    scrollBottom(); if (pct >= 100) { clearInterval(inv); line.innerHTML = `<span style="color:#00ff41">OPERATION SUCCESS.</span>`; scrollBottom(); resolve(); }
-                }, 100);
+                    pct += 5; l.innerHTML = `<span class="c-cyan">${text}: [${'#'.repeat(pct/5)}${'.'.repeat(20-pct/5)}] ${pct}%</span>`;
+                    scrollBottom(); if (pct >= 100) { clearInterval(inv); l.innerHTML = `<span class="c-cyan">✓ OPERATION COMPLETE</span>`; resolve(); }
+                }, 40);
             });
         };
 
-        // --- UPDATED PRINT WELCOME DENGAN PESAN MASTER ---
         const printWelcome = () => {
-            const hist = document.getElementById('history');
-            const logo = `
+            document.getElementById('history').innerHTML += `<pre class="c-cyan">
 ██╗   ██╗ █████╗ ██╗   ██╗██╗     ████████╗
 ██║   ██║██╔══██╗██║   ██║██║     ╚══██╔══╝
 ██║   ██║███████║██║   ██║██║        ██║   
 ╚██╗ ██╔╝██╔══██║██║   ██║██║        ██║   
- ╚████╔╝ ██║  ██║╚██████╔╝███████╗   ██║   `;
-            hist.innerHTML += `<pre>${logo}</pre>
-            <p style="color:#ffbd2e">SYSTEM LOADED. USER: ${user.name} [ID: ${user.id}]</p>
-            <div style="background:#0a0a0a; padding:12px; border-left:3px solid #00ff41; margin:10px 0; font-size:12px; color:#fff;">
-                <p style="color:#00ff41; margin-bottom:8px;"><b>[BROADCAST DARI MASTER]</b></p>
-                <p>"Selamat datang di VAULT-05. Ketik <b>help</b> di terminal untuk melihat daftar perintah. 
-                Ingat, sistem ini bersifat satu perangkat satu akun. Semua uang digital bersumber dari saya, 
-                dan kamu bisa bebas transfer ke sesama user pakai ID masing-masing. 
-                Hati-hati, saya memantau semua trafik dari sini!"</p>
-            </div>
-            <div style="background:#111; padding:10px; border:1px solid #222; margin:10px 0; font-size:11px;">
-                <p style="color:#ffbd2e; margin:0 0 5px 0;">-- MANUAL SINGKAT --</p>
-                <p>• <b style="color:#fff">balance</b> : Cek saldo.</p>
-                <p>• <b style="color:#fff">transfer [ID] [JUMLAH]</b> : Kirim uang.</p>
-                <p>• <b style="color:#fff">history</b> : Riwayat transaksi.</p>
-                <p>• <b style="color:#fff">clear</b> : Bersihkan terminal.</p>
-            </div><hr style="border-top:1px dashed #222">`;
+ ╚████╔╝ ██║  ██║╚██████╔╝███████╗   ██║   </pre>
+            <p class="c-gold">Welcome, ${user.name}. System established. Type <span class="c-cyan">'help'</span> for instruction.</p><hr style="border:1px solid #1a1a2e">`;
             scrollBottom();
         };
 
-        document.getElementById('btn-reg-toggle').onclick = () => { document.getElementById('reg-fields').style.display = 'block'; document.getElementById('btn-login').style.display = 'none'; document.getElementById('btn-reg-toggle').style.display = 'none'; document.getElementById('btn-reg-final').style.display = 'block'; };
+        // --- AUTH ---
+        document.getElementById('btn-reg-toggle').onclick = () => {
+            document.getElementById('reg-fields').style.display = 'block';
+            document.getElementById('btn-login').style.display = 'none';
+            document.getElementById('btn-reg-final').style.display = 'block';
+        };
 
         document.getElementById('btn-reg-final').onclick = async () => {
             const u = document.getElementById('login-user').value.trim();
             const p = document.getElementById('login-pass').value;
-            if(!u || p !== document.getElementById('reg-pass-confirm').value) return alert("Error!");
-            const newID = "VLT-" + Math.random().toString(36).substring(2, 6).toUpperCase();
-            await set(ref(db, 'users/' + u), { password: p, id: newID, balance: 0, device_locked: true, is_frozen: false, online: false });
-            localStorage.setItem('vault_user_lock', u); location.reload();
+            const cp = document.getElementById('reg-pass-confirm').value;
+            if(!u || !p) return alert("Fill all fields");
+            if(p !== cp) return alert("Pass mismatch");
+            
+            const snap = await get(ref(db, 'users/'+u));
+            if(snap.exists()) return alert("User already exists");
+
+            const id = "VLT-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+            await set(ref(db, 'users/'+u), { password:p, id:id, balance:0, vlt_stock:0, is_frozen:false, online:false });
+            alert("Identity Created. Accessing...");
+            location.reload();
         };
 
         document.getElementById('btn-login').onclick = async () => {
             const u = document.getElementById('login-user').value.trim();
             const p = document.getElementById('login-pass').value;
-            const snap = await get(ref(db, 'users/' + u));
+            const snap = await get(ref(db, 'users/'+u));
             if(snap.exists() && snap.val().password === p) {
-                const lock = localStorage.getItem('vault_user_lock');
-                if (snap.val().device_locked && lock && lock !== u) return alert("Device Locked!");
-                localStorage.setItem('vault_user_lock', u); user = { name: u, ...snap.val() };
-                const userRef = ref(db, `users/${user.name}`);
-                update(userRef, { online: true });
-                onDisconnect(userRef).update({ online: false });
-                document.getElementById('login-screen').style.display = 'none'; document.getElementById('main-app').style.display = 'block'; initSystem();
-            } else { alert("Akses Ditolak!"); }
+                user = { name:u, ...snap.val() };
+                update(ref(db, `users/${u}`), { online:true });
+                onDisconnect(ref(db, `users/${u}`)).update({ online:false });
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                startSystem();
+            } else alert("Invalid Credentials");
         };
 
-        function initSystem() {
+        function startSystem() {
             document.getElementById('display-id').innerText = user.id;
             printWelcome();
-            const ctx = document.getElementById('txChart').getContext('2d');
-            txChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: '#00ff41', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(0, 255, 65, 0.1)', tension: 0.4 }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{beginAtZero:true, ticks:{color:'#333', font:{size:8}}}} } });
-            
+
+            const ctx = document.getElementById('marketChart').getContext('2d');
+            mChart = new Chart(ctx, { 
+                type: 'line', 
+                data: { labels: Array(20).fill(''), datasets: [{ data: [], borderColor: '#00d2ff', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(0, 210, 255, 0.05)', tension: 0.4 }] },
+                options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{display:false}} }
+            });
+
             onValue(ref(db, 'users'), (snap) => {
-                const all = snap.val(); if(!all) return;
-                const sorted = Object.entries(all).map(([n, d]) => ({ n, b: d.balance, online: d.online })).sort((a,b)=>b.b-a.b);
-                document.getElementById('user-count').innerText = sorted.length;
-                document.getElementById('leaderboard-box').innerHTML = sorted.map((u,i)=> {
-                    const status = u.online ? `<span class="status-dot" style="color:#00ff41">●</span>` : `<span class="status-dot" style="color:#444">○</span>`;
-                    return `<div>${status} #${i+1} ${u.n} <span style="float:right">${formatN(u.b)}</span></div>`;
-                }).join('');
-                if(user.balance < all[user.name].balance && user.balance !== 0 && !miningInterval) playSound('sound-money');
-                user.balance = all[user.name].balance; user.is_frozen = all[user.name].is_frozen;
-            });
-
-            onValue(ref(db, 'blockchain'), (snap) => {
-                const txs = Object.values(snap.val() || {}).slice(-15);
-                txChart.data.labels = txs.map(t => t.time); txChart.data.datasets[0].data = txs.map(t => t.amt); txChart.update();
-            });
-
-            const histRef = query(ref(db, 'history'), limitToLast(5));
-            onValue(histRef, (snap) => {
                 const data = snap.val(); if(!data) return;
-                Object.values(data).forEach(tx => {
-                    if(tx.from === user.name || tx.to === user.name) {
-                        const isOut = tx.from === user.name;
-                        const color = isOut ? "#ff5f56" : "#27c93f";
-                        const sign = isOut ? "-" : "+";
-                        const peerLabel = isOut ? `TO: ${tx.to}` : `FROM: ${tx.from}`;
-                        const logID = `log-${tx.time}-${tx.amt}`.replace(/:/g,'-');
-                        if(!document.getElementById(logID)) {
-                            const entry = document.createElement('div'); entry.id = logID; entry.className = "tx-log"; entry.style.color = color;
-                            entry.innerHTML = `[${tx.time}] ${sign}${formatN(tx.amt)} | ${peerLabel}`;
-                            document.getElementById('history').appendChild(entry); scrollBottom();
-                        }
-                    }
-                });
+                const sorted = Object.entries(data).sort((a,b) => b[1].balance - a[1].balance);
+                document.getElementById('leaderboard-box').innerHTML = sorted.map(([n, d], i) => `
+                    <div style="margin-bottom:4px; color:${d.online ? '#00ff41':'#444'}">
+                        ${d.online ? '●':'○'} #${i+1} ${n} <span style="float:right; color:#00d2ff">${formatN(d.balance)}</span>
+                    </div>`).join('');
+                if(user.balance < data[user.name].balance && user.balance !== 0) playS('sound-money');
+                user.balance = data[user.name].balance;
+                user.vlt_stock = data[user.name].vlt_stock || 0;
+                user.is_frozen = data[user.name].is_frozen;
             });
 
             onValue(ref(db, 'messages'), (snap) => {
-                const cb = document.getElementById('chat-box');
-                const data = snap.val(); 
-                if(!data) { cb.innerHTML = `<div style="color:#444;text-align:center">-- NO MESSAGES --</div>`; return; }
-                cb.innerHTML = Object.values(data).map(x => {
-                    if (!x.type) return `<div><span style="color:#ffbd2e">${x.user}</span>: ${x.text}</div>`;
-                    if (x.type === 'private' && (x.to === user.name || x.user === user.name)) {
-                        const label = x.user === user.name ? `TO ${x.to}` : `FROM ${x.user}`;
-                        return `<div style="color:#d442f5"><i>[PM ${label}]: ${x.text}</i></div>`;
+                const data = snap.val(); if(!data) return;
+                document.getElementById('chat-box').innerHTML = Object.values(data).slice(-15).map(m => {
+                    if(m.type === 'private' && (m.to === user.name || m.user === user.name)) {
+                        return `<div class="c-purple">[PM] ${m.user}: ${m.text}</div>`;
                     }
+                    if(!m.type) return `<div><span class="c-gold">${m.user}</span>: ${m.text}</div>`;
                     return "";
                 }).join('');
-                cb.scrollTop = cb.scrollHeight;
+                document.getElementById('chat-box').scrollTop = 9999;
             });
+
+            setInterval(() => {
+                const old = marketPrice; marketPrice += (Math.random() - 0.47) * 45; if(marketPrice < 100) marketPrice = 100;
+                const el = document.getElementById('vlt-price'); el.innerText = `Rp${formatN(marketPrice)}`;
+                el.style.color = marketPrice >= old ? "#00ff41" : "#ff5f56";
+                mChart.data.datasets[0].data.push(marketPrice);
+                mChart.data.datasets[0].borderColor = marketPrice >= old ? "#00ff41" : "#ff5f56";
+                if(mChart.data.datasets[0].data.length > 20) mChart.data.datasets[0].data.shift();
+                mChart.update('none');
+            }, 3000);
         }
 
-        document.getElementById('user-input').addEventListener('keydown', async function(e) {
+        document.getElementById('user-input').onkeydown = async (e) => {
             if(e.key === 'Enter') {
-                e.preventDefault(); const input = this.value.trim(); const pts = input.split(' '); const cmd = pts[0].toLowerCase();
-                const hist = document.getElementById('history'); if(!input) return;
-                hist.innerHTML += `<div><span style="color:#444">$</span> ${input}</div>`; this.value = "";
-                scrollBottom();
+                const val = e.target.value.trim(); const pts = val.split(' '); const cmd = pts[0].toLowerCase();
+                const hist = document.getElementById('history'); if(!val) return;
+                hist.innerHTML += `<div><span class="c-cyan">>>></span> ${val}</div>`; e.target.value = "";
 
-                if (cmd === 'help') {
-                    hist.innerHTML += `<div style="color:#00ff41; font-size:11px; margin:5px 0; border:1px solid #222; padding:5px;">
-                        <p>> balance | clear | history | transfer [ID] [AMT] | /pm [USER] [MSG]</p>
-                        ${user.name === "MasterHafiz" ? `<p style="color:#ff5f56">> mine start/stop | deposit [AMT] | /freeze [user] | sudo_clear_chat | logout_force</p>` : ""}
+                if(cmd === 'help') {
+                    hist.innerHTML += `<div style="border:1px solid #1a1a2e; padding:10px; margin:5px 0; font-size:11px;">
+                        <p class="c-cyan">USER: balance, buy [qty], sell [qty], transfer [ID] [AMT], history, /pm [user] [msg], clear</p>
+                        ${user.name === "MasterHafiz" ? `<p class="c-gold">MASTER: mine start/stop, deposit [AMT], /freeze [user], /unfreeze [user], sudo_clear_chat, logout_force</p>` : ""}
                     </div>`;
                 }
-                else if (cmd === 'history') {
+                else if(cmd === 'balance') hist.innerHTML += `<p class="c-gold">BALANCE: <span class="highlight">Rp${formatN(user.balance)}</span> | ASSETS: <span class="c-cyan">${user.vlt_stock} VLT</span></p>`;
+                else if(cmd === 'clear') { hist.innerHTML = ""; printWelcome(); }
+                else if(cmd === 'buy' || cmd === 'sell') {
+                    const qty = parseInt(pts[1]); const cost = qty * marketPrice;
+                    if(cmd === 'buy' && user.balance >= cost) {
+                        await update(ref(db, `users/${user.name}`), { balance: user.balance - cost, vlt_stock: user.vlt_stock + qty });
+                        hist.innerHTML += `<p class="c-cyan">✓ SUCCESS: ACQUIRED ${qty} VLT ASSETS.</p>`;
+                    } else if(cmd === 'sell' && user.vlt_stock >= qty) {
+                        await update(ref(db, `users/${user.name}`), { balance: user.balance + cost, vlt_stock: user.vlt_stock - qty });
+                        hist.innerHTML += `<p class="c-cyan">✓ SUCCESS: LIQUIDATED ${qty} VLT ASSETS.</p>`;
+                    } else hist.innerHTML += `<p class="c-red">FAILED: INSUFFICIENT RESOURCES.</p>`;
+                }
+                else if(cmd === 'transfer') {
+                    if(user.is_frozen) { hist.innerHTML += `<p class="c-red">ERROR: ACCOUNT IS FROZEN BY MASTER.</p>`; return; }
+                    const tid = pts[1]?.toUpperCase(); const amt = parseFloat(pts[2]);
+                    const snap = await get(ref(db, 'users'));
+                    const targetData = Object.entries(snap.val()).find(([n, d]) => d.id === tid);
+                    if(targetData && amt > 0 && user.balance >= amt) {
+                        await showLoading("ENCRYPTING TRANSACTION");
+                        await update(ref(db, `users/${user.name}`), { balance: user.balance - amt });
+                        await update(ref(db, `users/${targetData[0]}`), { balance: targetData[1].balance + amt });
+                        push(ref(db, 'history'), { from: user.name, to: targetData[0], amt, time: new Date().toLocaleTimeString() });
+                        playS('sound-success');
+                    } else hist.innerHTML += `<p class="c-red">TRANSACTION DENIED: INVALID DATA.</p>`;
+                }
+                else if(cmd === '/pm') {
+                    const to = pts[1]; const m = pts.slice(2).join(' ');
+                    if(to && m) push(ref(db, 'messages'), { user:user.name, to, text:m, type:'private' });
+                }
+                else if(cmd === 'history') {
                     const snap = await get(ref(db, 'history'));
                     if(snap.exists()) {
-                        hist.innerHTML += `<p style="color:#666">-- DATA RECOVERY --</p>`;
-                        Object.values(snap.val()).forEach(tx => {
-                            if(tx.from === user.name || tx.to === user.name) {
-                                const isOut = tx.from === user.name;
-                                hist.innerHTML += `<div class="tx-log" style="color:${isOut ? '#ff5f56':'#27c93f'}">[${tx.time}] ${isOut?'-':'+'}${formatN(tx.amt)} | ${isOut?'TO':'FROM'}: ${isOut?tx.to:tx.from}</div>`;
-                            }
+                        hist.innerHTML += `<p class="c-cyan">-- TRANSACTION LOGS --</p>`;
+                        Object.values(snap.val()).slice(-10).forEach(t => {
+                            if(t.from === user.name || t.to === user.name) 
+                                hist.innerHTML += `<div class="tx-log">[${t.time}] ${t.from} → ${t.to} | Rp${formatN(t.amt)}</div>`;
                         });
-                        hist.innerHTML += `<p style="color:#666">-- END --</p>`;
-                    } else { hist.innerHTML += `<p>No records found.</p>`; }
+                    }
                 }
-                else if (cmd === '/pm') {
-                    const toU = pts[1]; const msg = pts.slice(2).join(' ');
-                    if(toU && msg) push(ref(db, 'messages'), { user: user.name, text: msg, to: toU, type: 'private' });
-                }
-                else if(cmd === 'balance') hist.innerHTML += `<p>WALLET: <span class="highlight">${formatN(user.balance)}</span></p>`;
-                else if(cmd === 'clear') { hist.innerHTML = ""; printWelcome(); }
-                else if(cmd === 'logout_force') { await showLoading(hist); update(ref(db, `users/${user.name}`), { online: false }); localStorage.removeItem('vault_user_lock'); location.reload(); }
-                else if (cmd === 'transfer') {
-                    if(user.is_frozen) { hist.innerHTML += `<p style="color:red">ERR: ACCOUNT FROZEN.</p>`; scrollBottom(); return; }
-                    const idT = pts[1]?.toUpperCase(); const amt = parseFloat(pts[2]);
-                    const snap = await get(ref(db, 'users'));
-                    const targetEntry = Object.entries(snap.val()).find(([n, d]) => d.id === idT);
-                    if(targetEntry && amt > 0 && amt <= user.balance) {
-                        const targetName = targetEntry[0];
-                        const now = new Date().toLocaleTimeString();
-                        await showLoading(hist, "VERIFYING TRANSACTION");
-                        await update(ref(db, `users/${user.name}`), { balance: user.balance - amt });
-                        await update(ref(db, `users/${targetName}`), { balance: targetEntry[1].balance + amt });
-                        push(ref(db, 'blockchain'), { amt, time: now });
-                        push(ref(db, 'history'), { from: user.name, to: targetName, amt: amt, time: now });
-                        playSound('sound-success');
-                    } else { hist.innerHTML += `<p style="color:red">ERR: INVALID ID OR INSUFFICIENT BALANCE.</p>`; }
-                }
-                else if(user.name === "MasterHafiz") {
-                    const targetU = pts[1];
-                    if(cmd === 'sudo_clear_chat') {
-                        await showLoading(hist, "PURGING CHAT LOGS");
-                        await remove(ref(db, 'messages'));
-                        hist.innerHTML += `<p style="color:cyan">DATABASE: Chat History Erased.</p>`;
+                if(user.name === "MasterHafiz") {
+                    if(cmd === 'deposit') {
+                        const amt = parseFloat(pts[1]);
+                        await update(ref(db, `users/${user.name}`), { balance: user.balance + amt });
+                        hist.innerHTML += `<p class="c-gold">MASTER: DEPOSIT Rp${formatN(amt)} CONFIRMED.</p>`;
                     }
                     else if(cmd === 'mine') {
                         if(pts[1] === 'start') {
-                            if(!miningInterval) miningInterval = setInterval(() => update(ref(db, `users/${user.name}`), { balance: user.balance + 0.1 }), 5000);
-                            hist.innerHTML += `<p style="color:cyan">MINING: ACTIVE</p>`;
-                        } else { clearInterval(miningInterval); miningInterval = null; hist.innerHTML += `<p style="color:red">MINING: STOPPED</p>`; }
+                            if(!miningInterval) miningInterval = setInterval(()=> update(ref(db, `users/${user.name}`), { balance: user.balance + 5000 }), 3000);
+                            hist.innerHTML += `<p class="c-gold">MINING: ACTIVE</p>`;
+                        } else { clearInterval(miningInterval); miningInterval=null; hist.innerHTML += `<p class="c-red">MINING: STOPPED</p>`; }
                     }
-                    else if(cmd === 'deposit') { 
-                        const amt = parseFloat(pts[1]); const now = new Date().toLocaleTimeString();
-                        await showLoading(hist);
-                        update(ref(db, `users/${user.name}`), { balance: user.balance + amt });
-                        push(ref(db, 'history'), { from: "SYSTEM", to: user.name, amt: amt, time: now });
+                    else if(cmd === '/freeze') {
+                        update(ref(db, `users/${pts[1]}`), { is_frozen: true });
+                        hist.innerHTML += `<p class="c-red">TARGET FROZEN: ${pts[1]}</p>`;
                     }
-                    else if(cmd === '/freeze') { update(ref(db, `users/${targetU}`), { is_frozen: true }); hist.innerHTML += `<p style="color:red">LOCKED: ${targetU}</p>`; }
-                    else if(cmd === '/unfreeze') { update(ref(db, `users/${targetU}`), { is_frozen: false }); hist.innerHTML += `<p style="color:#00ff41">ACTIVE: ${targetU}</p>`; }
+                    else if(cmd === '/unfreeze') {
+                        update(ref(db, `users/${pts[1]}`), { is_frozen: false });
+                        hist.innerHTML += `<p class="c-cyan">TARGET RELEASED: ${pts[1]}</p>`;
+                    }
+                    else if(cmd === 'sudo_clear_chat') {
+                        await remove(ref(db, 'messages'));
+                        hist.innerHTML += `<p class="c-gold">DATABASE: CHAT PURGED.</p>`;
+                    }
+                    else if(cmd === 'logout_force') {
+                        update(ref(db, `users/${user.name}`), { online: false });
+                        location.reload();
+                    }
                 }
                 scrollBottom();
             }
-        });
+        };
 
-        document.getElementById('chat-input').addEventListener('keydown', function(e) {
-            if(e.key === 'Enter' && this.value) { push(ref(db, 'messages'), { user: user.name, text: this.value }); this.value = ""; }
-        });
+        document.getElementById('chat-input').onkeydown = (e) => {
+            if(e.key === 'Enter' && e.target.value) {
+                push(ref(db, 'messages'), { user: user.name, text: e.target.value });
+                e.target.value = "";
+            }
+        };
     </script>
 </body>
 </html>
