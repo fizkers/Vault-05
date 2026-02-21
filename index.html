@@ -8,11 +8,30 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: #020205; color: #00ff41; font-family: 'Fira Code', monospace; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; overflow: hidden; }
         
-        .main-layout { display: grid; grid-template-columns: 2.5fr 1fr; gap: 15px; width: 100%; max-width: 1200px; height: 90vh; }
-        .terminal-container { background: rgba(13, 13, 20, 0.95); border: 1px solid #1a1a2e; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0, 255, 65, 0.1); overflow: hidden; }
-        .terminal-header { background: #161625; padding: 12px; display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 1px solid #1a1a2e; }
+        /* Layout Utama Fix */
+        body { 
+            background: #020205; color: #00ff41; font-family: 'Fira Code', monospace; 
+            margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; 
+            height: 100vh; height: 100dvh; overflow: hidden; 
+        }
+        
+        #main-app { width: 100%; max-width: 1200px; height: 100%; display: flex; flex-direction: column; }
+        .main-layout { 
+            display: grid; grid-template-columns: 2.5fr 1fr; gap: 15px; width: 100%; height: 100%; min-height: 0; 
+        }
+
+        .terminal-container { 
+            background: rgba(13, 13, 20, 0.95); border: 1px solid #1a1a2e; border-radius: 12px; 
+            display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0, 255, 65, 0.1); 
+            overflow: hidden; min-height: 0; 
+        }
+
+        .terminal-header { 
+            background: #161625; padding: 12px; display: flex; align-items: center; 
+            justify-content: center; position: relative; border-bottom: 1px solid #1a1a2e; flex-shrink: 0;
+        }
+
         .buttons { display: flex; gap: 6px; position: absolute; left: 15px; }
         .dot { width: 8px; height: 8px; border-radius: 50%; }
         .red { background: #ff5f56; box-shadow: 0 0 5px #ff5f56; } 
@@ -20,7 +39,11 @@
         .green { background: #27c93f; box-shadow: 0 0 5px #27c93f; }
         .title { color: #505070; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
 
-        .terminal-body { padding: 15px; overflow-y: auto; font-size: 13px; flex-grow: 1; scroll-behavior: smooth; }
+        /* Scroll Area Fix */
+        .terminal-body { 
+            padding: 15px; overflow-y: auto; font-size: 13px; flex-grow: 1; 
+            scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+        }
         .terminal-body::-webkit-scrollbar { width: 4px; }
         .terminal-body::-webkit-scrollbar-thumb { background: #1a1a2e; border-radius: 10px; }
 
@@ -29,12 +52,14 @@
         input { background: transparent; border: none; color: #fff; font-family: 'Fira Code'; outline: none; width: 100%; font-size: 16px; }
         .term-btn { flex: 1; background: transparent; border: 1px solid #00d2ff; color: #00d2ff; padding: 10px; cursor: pointer; font-family: 'Fira Code'; font-size: 11px; transition: 0.3s; border-radius: 4px; }
 
-        .sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
-        .sidebar-box { flex: 1; min-height: 180px; }
-        #chat-box { font-size: 11px; line-height: 1.6; color: #a0a0c0; }
+        .sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; min-height: 0; }
+        .sidebar-box { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        #chat-box { font-size: 11px; line-height: 1.6; color: #a0a0c0; overflow-y: auto; flex-grow: 1; padding: 10px; }
         
-        /* Mobile enter support & layout fix */
-        .cmd-line-form, .chat-form { display: flex; width: 100%; background: #080810; padding: 12px; border-top: 1px solid #1a1a2e; align-items: center; }
+        .cmd-line-form, .chat-form { 
+            display: flex; width: 100%; background: #080810; padding: 12px; 
+            border-top: 1px solid #1a1a2e; align-items: center; flex-shrink: 0;
+        }
         .chat-in { font-size: 14px; color: #fff; outline: none; border: none; width: 100%; background: transparent; }
         
         .c-cyan { color: #00d2ff; text-shadow: 0 0 5px #00d2ff; }
@@ -45,11 +70,12 @@
         .prompt { color: #00d2ff; margin-right: 10px; font-weight: bold; }
         .tx-log { font-size: 11px; margin: 5px 0; padding: 5px; border-left: 2px solid #1a1a2e; background: rgba(255,255,255,0.02); }
 
+        /* Media Query: Responsif untuk HP */
         @media (max-width: 900px) { 
-            .main-layout { grid-template-columns: 1fr; height: 98dvh; display: flex; flex-direction: column; } 
-            .terminal-container { flex: 2; margin-bottom: 10px; height: auto; } 
-            .sidebar { flex: 1.5; overflow-y: auto; gap: 10px; }
-            .sidebar-box { min-height: 120px; }
+            .main-layout { grid-template-columns: 1fr; grid-template-rows: 1.8fr 1fr; height: 100%; gap: 10px; } 
+            .sidebar { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
+            .sidebar-box { min-width: 280px; flex: 0 0 auto; height: 100%; }
+            body { padding: 5px; }
         }
     </style>
 </head>
@@ -71,7 +97,7 @@
         </div>
     </div>
 
-    <div id="main-app" style="display:none; width: 100%; max-width: 1200px;">
+    <div id="main-app" style="display:none;">
         <div class="main-layout">
             <div class="terminal-container">
                 <div class="terminal-header">
@@ -91,12 +117,12 @@
                     <div class="terminal-header"><div class="title c-cyan">MARKET INDEX</div></div>
                     <div class="terminal-body" style="text-align: center; background: radial-gradient(circle at center, #0a0a1a 0%, #020205 100%);">
                         <div id="vlt-price" style="font-size: 22px; font-weight: bold; margin-bottom: 5px;">Rp1.000</div>
-                        <canvas id="marketChart" style="max-height: 90px;"></canvas>
+                        <canvas id="marketChart" style="max-height: 80px;"></canvas>
                     </div>
                 </div>
                 <div class="terminal-container sidebar-box">
                     <div class="terminal-header"><div class="title c-purple">ENCRYPTED CHAT</div></div>
-                    <div class="terminal-body" id="chat-box"></div>
+                    <div id="chat-box"></div>
                     <form id="chat-form-box" class="chat-form">
                         <input type="text" id="chat-input" placeholder="Secure transmission..." class="chat-in" enterkeyhint="send">
                     </form>
@@ -138,7 +164,7 @@
         };
 
         const printWelcome = () => {
-            document.getElementById('history').innerHTML += `<pre class="c-cyan" style="font-size: 10px;">
+            document.getElementById('history').innerHTML += `<pre class="c-cyan" style="font-size: 8px;">
 ██╗   ██╗ █████╗ ██╗   ██╗██╗     ████████╗
 ██║   ██║██╔══██╗██║   ██║██║     ╚══██╔══╝
 ██║   ██║███████║██║   ██║██║        ██║   
@@ -226,7 +252,6 @@
             }, 3000);
         }
 
-        // --- FORM HANDLER (ENTER FIX) ---
         document.getElementById('terminal-form').onsubmit = async (e) => {
             e.preventDefault();
             const inputEl = document.getElementById('user-input');
@@ -278,7 +303,6 @@
                     });
                 }
             }
-            // MASTER ONLY
             if(user.name === "MasterHafiz") {
                 if(cmd === 'deposit') {
                     const amt = parseFloat(pts[1]);
