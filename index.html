@@ -9,7 +9,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* Layout Utama Fix */
         body { 
             background: #020205; color: #00ff41; font-family: 'Fira Code', monospace; 
             margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; 
@@ -39,7 +38,6 @@
         .green { background: #27c93f; box-shadow: 0 0 5px #27c93f; }
         .title { color: #505070; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
 
-        /* Scroll Area Fix */
         .terminal-body { 
             padding: 15px; overflow-y: auto; font-size: 13px; flex-grow: 1; 
             scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
@@ -70,7 +68,6 @@
         .prompt { color: #00d2ff; margin-right: 10px; font-weight: bold; }
         .tx-log { font-size: 11px; margin: 5px 0; padding: 5px; border-left: 2px solid #1a1a2e; background: rgba(255,255,255,0.02); }
 
-        /* Media Query: Responsif untuk HP */
         @media (max-width: 900px) { 
             .main-layout { grid-template-columns: 1fr; grid-template-rows: 1.8fr 1fr; height: 100%; gap: 10px; } 
             .sidebar { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
@@ -148,7 +145,7 @@
         const db = getDatabase(app);
         let user = null, mChart, marketPrice = 1000, miningInterval = null;
 
-        const formatN = (num) => Number(num).toLocaleString('id-ID');
+        const formatN = (num) => Math.floor(num).toLocaleString('id-ID');
         const scrollBottom = () => { const a = document.getElementById('term-scroll'); a.scrollTop = a.scrollHeight; };
         const playS = (id) => document.getElementById(id).play().catch(()=>{});
 
@@ -214,7 +211,7 @@
             const ctx = document.getElementById('marketChart').getContext('2d');
             mChart = new Chart(ctx, { 
                 type: 'line', 
-                data: { labels: Array(20).fill(''), datasets: [{ data: [], borderColor: '#00d2ff', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(0, 210, 255, 0.05)', tension: 0.4 }] },
+                data: { labels: Array(30).fill(''), datasets: [{ data: Array(30).fill(1000), borderColor: '#00d2ff', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(0, 210, 255, 0.05)', tension: 0.4 }] },
                 options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{display:false}} }
             });
 
@@ -241,15 +238,23 @@
                 document.getElementById('chat-box').scrollTop = 9999;
             });
 
+            // MARKET ENGINE - FAST REAL-TIME VERSION (1s)
             setInterval(() => {
-                const old = marketPrice; marketPrice += (Math.random() - 0.47) * 45; if(marketPrice < 100) marketPrice = 100;
-                const el = document.getElementById('vlt-price'); el.innerText = `Rp${formatN(marketPrice)}`;
-                el.style.color = marketPrice >= old ? "#00ff41" : "#ff5f56";
+                const old = marketPrice; 
+                marketPrice += (Math.random() - 0.485) * 40; // Penyesuaian agar stabil
+                if(marketPrice < 100) marketPrice = 100;
+                
+                const el = document.getElementById('vlt-price'); 
+                el.innerText = `Rp${formatN(marketPrice)}`;
+                
+                const currentTrendColor = marketPrice >= old ? "#00ff41" : "#ff5f56";
+                el.style.color = currentTrendColor;
+                
                 mChart.data.datasets[0].data.push(marketPrice);
-                mChart.data.datasets[0].borderColor = marketPrice >= old ? "#00ff41" : "#ff5f56";
-                if(mChart.data.datasets[0].data.length > 20) mChart.data.datasets[0].data.shift();
+                mChart.data.datasets[0].borderColor = currentTrendColor;
+                if(mChart.data.datasets[0].data.length > 30) mChart.data.datasets[0].data.shift();
                 mChart.update('none');
-            }, 3000);
+            }, 1000); // Kecepatan diperbarui setiap 1 detik
         }
 
         document.getElementById('terminal-form').onsubmit = async (e) => {
@@ -268,13 +273,19 @@
             else if(cmd === 'balance') hist.innerHTML += `<p class="c-gold">BALANCE: <span class="highlight">Rp${formatN(user.balance)}</span> | ASSETS: <span class="c-cyan">${user.vlt_stock} VLT</span></p>`;
             else if(cmd === 'clear') { hist.innerHTML = ""; printWelcome(); }
             else if(cmd === 'buy' || cmd === 'sell') {
-                const qty = parseInt(pts[1]); const cost = qty * marketPrice;
+                const qty = parseInt(pts[1]); 
+                if(isNaN(qty) || qty <= 0) return;
+                
+                // Kunci harga saat tombol ditekan
+                const currentMarketPrice = marketPrice;
+                const cost = qty * currentMarketPrice;
+
                 if(cmd === 'buy' && user.balance >= cost) {
                     await update(ref(db, `users/${user.name}`), { balance: user.balance - cost, vlt_stock: user.vlt_stock + qty });
-                    hist.innerHTML += `<p class="c-cyan">✓ SUCCESS: ACQUIRED ${qty} VLT.</p>`;
+                    hist.innerHTML += `<p class="c-cyan">✓ SUCCESS: ACQUIRED ${qty} VLT @ Rp${formatN(currentMarketPrice)}</p>`;
                 } else if(cmd === 'sell' && user.vlt_stock >= qty) {
                     await update(ref(db, `users/${user.name}`), { balance: user.balance + cost, vlt_stock: user.vlt_stock - qty });
-                    hist.innerHTML += `<p class="c-cyan">✓ SUCCESS: LIQUIDATED ${qty} VLT.</p>`;
+                    hist.innerHTML += `<p class="c-cyan">✓ SUCCESS: LIQUIDATED ${qty} VLT @ Rp${formatN(currentMarketPrice)}</p>`;
                 } else hist.innerHTML += `<p class="c-red">FAILED: INSUFFICIENT RESOURCES.</p>`;
             }
             else if(cmd === 'transfer') {
